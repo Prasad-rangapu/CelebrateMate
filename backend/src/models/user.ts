@@ -32,3 +32,12 @@ export const createUser = async (user: Omit<User, "id" | "is_verified" | "create
     updated_at: new Date().toISOString(),
   };
 };
+
+export const editUser = async (user: Pick<User, "id" | "name" | "email" | "phone" | "birthday">): Promise<User> => {
+  await pool.execute(
+    "UPDATE users SET name = ?, email = ?, phone = ?, birthday = ? WHERE id = ?",
+    [user.name, user.email, user.phone, user.birthday, user.id]
+  );
+  const [rows] = await pool.execute("SELECT * FROM users WHERE id = ?", [user.id]);
+  return (rows as User[])[0];
+};

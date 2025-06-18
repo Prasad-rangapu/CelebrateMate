@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../auth/AuthContext";
 
 interface Event {
   id?: number;
@@ -12,17 +13,11 @@ const Sidebar = () => {
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<"Birthday" | "Anniversary" | null>(null);
   const [form, setForm] = useState({ title: "", date: "", description: "" });
-
-  // Simulate login: store userId 1 in localStorage if not already there
-  useEffect(() => {
-    if (!localStorage.getItem("userId")) {
-      localStorage.setItem("userId", "1");
-    }
-    fetchEvents();
-  }, []);
+  const [editEvent, setEditEvent] = useState<Event | null>(null); // for editing
+  const { user } = useAuth();
 
   const fetchEvents = () => {
-    const userId = localStorage.getItem("userId");
+    const userId = user?.id;
     if (!userId) return;
 
     fetch(`http://localhost:5000/api/events?id=${userId}`)
@@ -31,9 +26,27 @@ const Sidebar = () => {
       .catch(() => setEvents([]));
   };
 
-  const openForm = (type: "Birthday" | "Anniversary") => {
+  useEffect(() => {
+    fetchEvents();
+  }, [user]);
+
+  const openForm = (type: "Birthday" | "Anniversary", event?: Event) => {
     setFormType(type);
-    setForm({ title: "", date: "", description: "" });
+
+    if (event) {
+      // edit mode
+      setEditEvent(event);
+      setForm({
+        title: event.title.replace(/^Birthday: |^Anniversary: /, ""),
+        date: event.date,
+        description: event.description,
+      });
+    } else {
+      // add mode
+      setEditEvent(null);
+      setForm({ title: "", date: "", description: "" });
+    }
+
     setShowForm(true);
   };
 
@@ -43,21 +56,44 @@ const Sidebar = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userId = Number(localStorage.getItem("userId") || "1");
+    const userId = user?.id;
+    if (!userId) return;
 
-    const eventToSend = {
-      ...form,
-      title: formType === "Birthday" ? `Birthday: ${form.title}` : `Anniversary: ${form.title}`,
+    const formattedTitle =
+      formType === "Birthday" ? `Birthday: ${form.title}` : `Anniversary: ${form.title}`;
+
+    const eventPayload = {
+      title: formattedTitle,
+      date: form.date,
+      description: form.description,
       userId,
     };
 
-    await fetch("http://localhost:5000/api/events", {
-      method: "POST",
+    const url = editEvent
+      ? `http://localhost:5000/api/events/${editEvent.id}`
+      : "http://localhost:5000/api/events";
+
+    const method = editEvent ? "PUT" : "POST";
+
+    await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(eventToSend),
+      body: JSON.stringify(eventPayload),
     });
 
     setShowForm(false);
+    setEditEvent(null);
+    fetchEvents();
+  };
+
+  const handleDelete = async (id: number) => {
+    const confirmed = window.confirm("Are you sure you want to delete this event?");
+    if (!confirmed) return;
+
+    await fetch(`http://localhost:5000/api/events/${id}`, {
+      method: "DELETE",
+    });
+
     fetchEvents();
   };
 
@@ -91,7 +127,9 @@ const Sidebar = () => {
             className="bg-white p-6 rounded-xl shadow-lg space-y-4 w-80"
             onSubmit={handleSubmit}
           >
-            <h2 className="text-lg font-bold mb-2 text-indigo-700">Add {formType}</h2>
+            <h2 className="text-lg font-bold mb-2 text-indigo-700">
+              {editEvent ? "Edit" : "Add"} {formType}
+            </h2>
             <input
               name="title"
               type="text"
@@ -121,12 +159,15 @@ const Sidebar = () => {
                 type="submit"
                 className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded-lg font-semibold transition"
               >
-                Save
+                {editEvent ? "Update" : "Save"}
               </button>
               <button
                 type="button"
                 className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg font-semibold transition"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditEvent(null);
+                }}
               >
                 Cancel
               </button>
@@ -144,6 +185,25 @@ const Sidebar = () => {
           {events.map((event) => (
             <li key={event.id} className="bg-white/60 rounded-lg px-3 py-2">
               🎉 {event.title} - {new Date(event.date).toLocaleDateString()}
+              <div className="flex justify-end gap-2 mt-1">
+                <button
+                  onClick={() =>
+                    openForm(
+                      event.title.startsWith("Birthday") ? "Birthday" : "Anniversary",
+                      event
+                    )
+                  }
+                  className="text-blue-600 hover:underline text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(event.id!)}
+                  className="text-red-600 hover:underline text-sm"
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import { FaBirthdayCake, FaGift } from "react-icons/fa";
 import Header from "../components/header";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import Footer from "../components/footer";
+import {useAuth} from "../auth/AuthContext"
 
 interface Event {
   id?: number;
@@ -30,13 +31,13 @@ export default function DashBoard() {
     phone: "",
   });
   const [contactSuccess, setContactSuccess] = useState<string | null>(null);
-
+const {user}=useAuth();
   // Fetch events for userId=1 (mock login)
   useEffect(() => {
-    if (!localStorage.getItem("userId")) {
-      localStorage.setItem("userId", "1");
-    }
-    const userId = localStorage.getItem("userId")!;
+   
+    const userId = user?.id;
+    if (!userId) return;
+    setLoading(true);
     fetch(`http://localhost:5000/api/events?id=${userId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -44,7 +45,7 @@ export default function DashBoard() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [user?.id]);
 
   // Stats
   const today = new Date();
@@ -256,7 +257,7 @@ export default function DashBoard() {
             </div>
 
             {/* Reminder Settings & Celebration Ideas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div id="reminder-settings" className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               {/* Reminder Settings */}
               <div className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
                 <h3 className="text-lg font-bold mb-4 text-indigo-800">
@@ -293,7 +294,7 @@ export default function DashBoard() {
               </div>
 
               {/* Celebration Ideas */}
-              <div className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
+              <div id="celebration-ideas" className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
                 <h3 className="text-lg font-bold mb-4 text-indigo-800">
                   Celebration Ideas
                 </h3>

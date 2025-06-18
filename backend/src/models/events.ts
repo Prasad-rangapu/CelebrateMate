@@ -35,10 +35,10 @@ const getEventById = async (id: number) => {
 
 // Function to update an event
 const updateEvent = async (id: number, event: Partial<Event>) => {
-  const { title, date, description, reminder } = event;
+  const { title, date, description } = event;
   const [result] = await pool.execute(
-    "UPDATE events SET title = ?, date = ?, description = ?, reminder = ? WHERE id = ?",
-    [title, date, description, reminder, id]
+    "UPDATE events SET title = ?, date = ?, description = ? WHERE id = ?",
+    [title, date, description, id]
   );
   return (result as any).affectedRows > 0;
 };

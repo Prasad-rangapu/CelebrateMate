@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByEmail } from "../models/user";
+import { createUser, findUserByEmail,editUser } from "../models/user";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
@@ -27,7 +27,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
     const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.status(201).json({ token, user: { id: newUser.id, name: newUser.name, email: newUser.email } });
+    res.status(201).json({ token, user: { id: newUser.id, name: newUser.name, email: newUser.email, phone: newUser.phone, birthday: newUser.birthday } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -51,8 +51,33 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email ,phone: user.phone,birthday: user.birthday } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+export const editUserById = async (req: Request, res: Response): Promise<void> => {
+  const { name, email, phone, birthday } = req.body;
+  const userId = req.params.id || req.body.id;
+
+  if (!userId || !name || !email || !phone || !birthday) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const updatedUser = await editUser({
+      id: Number(userId),
+      name,
+      email,
+      phone,
+      birthday,
+    });
+
+    res.status(200).json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error("Error updating profile:", err);
+    res.status(500).json({ message: "Error updating profile" });
   }
 };

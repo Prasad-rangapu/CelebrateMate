@@ -15,7 +15,14 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
 // Get all events for a user
 export const getEvents = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = parseInt(req.params.userId);
+    const userIdParam = req.query.id;
+    const userId = typeof userIdParam === "string" ? parseInt(userIdParam, 10) : undefined;
+
+    if (typeof userId !== "number" || isNaN(userId)) {
+      res.status(400).json({ error: "Invalid or missing user id" });
+      return;
+    }
+
     const events = await eventModel.getEventsByUserId(userId);
     res.status(200).json(events);
   } catch (error: any) {
@@ -41,18 +48,26 @@ export const getEventById = async (req: Request, res: Response): Promise<void> =
 };
 
 // Update an event
+
 export const updateEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
-    const event = req.body;
+    const updatedData = req.body;
 
-    const success = await eventModel.updateEvent(id, event);
+    const success = await eventModel.updateEvent(id, updatedData);
+
     if (!success) {
       res.status(404).json({ error: "Event not found or no changes made" });
       return;
     }
 
-    res.status(200).json({ message: "Event updated successfully" });
+    // Refetch the updated event to return to the frontend
+    const updatedEvent = await eventModel.getEventById(id);
+
+    res.status(200).json({
+      message: "Event updated successfully",
+      event: updatedEvent,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
