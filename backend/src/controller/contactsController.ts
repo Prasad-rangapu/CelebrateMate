@@ -111,33 +111,109 @@ const deleteContact = async (req: Request, res: Response):Promise<void> => {
 //     res.status(500).json({ message: "Error fetching events", error: err }); 
 //   }
 // };
-const loadEvents = async (req: Request, res: Response): Promise<void> => {
+// const loadEvents = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const userId = req.params.id;
+//     if (!userId) {
+//       res.status(400).json({ message: "User ID is required in URL params" });
+//       return;
+//     }
+
+//     const [rows] = await pool.execute(
+//       `SELECT 
+//          id, 
+//          CASE 
+//            WHEN birthday IS NOT NULL THEN CONCAT('Birthday: ', name)
+//            WHEN anniversary IS NOT NULL THEN CONCAT('Anniversary: ', name)
+//          END AS title,
+//          COALESCE(birthday, anniversary) AS date,
+//          '' AS description
+//        FROM contacts
+//        WHERE user_id = ? AND (birthday IS NOT NULL OR anniversary IS NOT NULL)
+//        ORDER BY date`,
+//       [userId]
+//     );
+
+//     res.status(200).json(rows);
+//   } catch (err) {
+//     console.error("Error fetching contact events:", err);
+//     res.status(500).json({ message: "Error fetching contact events", error: err });
+//   }
+// };
+// export const loadEvents = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const userId = req.params.id;
+//     if (!userId) {
+//       res.status(400).json({ message: "User ID is required in URL params" });
+//       return;
+//     }
+
+//     const [rows] = await pool.execute(
+//       `
+//       SELECT id, CONCAT('Birthday: ', name) AS title, birthday AS date, '' AS description
+//       FROM contacts
+//       WHERE user_id = ? AND birthday IS NOT NULL
+
+//       UNION ALL
+
+//       SELECT id, CONCAT('Anniversary: ', name) AS title, anniversary AS date, '' AS description
+//       FROM contacts
+//       WHERE user_id = ? AND anniversary IS NOT NULL
+
+//       ORDER BY date ASC
+//       `,
+//       [userId, userId]
+//     );
+
+//     res.status(200).json(rows);
+//   } catch (err) {
+//     console.error("Error fetching contact events:", err);
+//     res.status(500).json({ message: "Error fetching contact events", error: err });
+//   }
+// };
+export const loadEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id;
     if (!userId) {
-      res.status(400).json({ message: "User ID is required in URL params" });
+      res.status(400).json({ message: "User ID is required" });
       return;
     }
 
-    const [rows] = await pool.execute(
+    const [rows]: any = await pool.execute(
       `SELECT 
-         id, 
-         CASE 
-           WHEN birthday IS NOT NULL THEN CONCAT('Birthday: ', name)
-           WHEN anniversary IS NOT NULL THEN CONCAT('Anniversary: ', name)
-         END AS title,
-         COALESCE(birthday, anniversary) AS date,
-         '' AS description
+         id,
+         name,
+         birthday,
+         anniversary
        FROM contacts
-       WHERE user_id = ? AND (birthday IS NOT NULL OR anniversary IS NOT NULL)
-       ORDER BY date`,
+       WHERE user_id = ?`,
       [userId]
     );
 
-    res.status(200).json(rows);
+    const contactEvents = [];
+
+    for (const row of rows) {
+      if (row.birthday) {
+        contactEvents.push({
+          title: `Birthday: ${row.name}`,
+          date: row.birthday,
+          description: `Birthday of ${row.name}`,
+        });
+      }
+      if (row.anniversary) {
+        contactEvents.push({
+          title: `Anniversary: ${row.name}`,
+          date: row.anniversary,
+          description: `Anniversary of ${row.name}`,
+        });
+      }
+    }
+
+    res.status(200).json(contactEvents);
   } catch (err) {
-    console.error("Error fetching contact events:", err);
-    res.status(500).json({ message: "Error fetching contact events", error: err });
+    console.error("Error loading contact events:", err);
+    res.status(500).json({ message: "Server error", error: err });
   }
 };
+
 export default { createContact, getContacts, editContact, deleteContact,loadEvents };

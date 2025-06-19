@@ -33,16 +33,16 @@ const Sidebar = () => {
 
     fetch(`http://localhost:5000/api/contacts/events/${userId}`)
       .then((res) => res.json())
-      .then(setContactEvents)
+      .then((data: Event[]) => {
+        setContactEvents(data); // No transformation needed
+      })
       .catch(() => setContactEvents([]));
   };
 
   useEffect(() => {
-    if (user) {
-      fetchEvents();
-      fetchContactEvents();
-    }
-  }, [user]);
+    fetchEvents();
+    fetchContactEvents();
+  }, [user?.id]);
 
   const openForm = (type: "Birthday" | "Anniversary", event?: Event) => {
     setFormType(type);
@@ -82,6 +82,7 @@ const Sidebar = () => {
     const url = editEvent
       ? `http://localhost:5000/api/events/${editEvent.id}`
       : "http://localhost:5000/api/events";
+
     const method = editEvent ? "PUT" : "POST";
 
     await fetch(url, {
@@ -99,15 +100,11 @@ const Sidebar = () => {
     const confirmed = window.confirm("Are you sure you want to delete this event?");
     if (!confirmed) return;
 
-    await fetch(`http://localhost:5000/api/events/${id}`, {
-      method: "DELETE",
-    });
-
+    await fetch(`http://localhost:5000/api/events/${id}`, { method: "DELETE" });
     fetchEvents();
   };
 
-  // ✅ Combine and sort all events by date
-  const combinedEvents = [...events, ...contactEvents].sort(
+  const allEvents = [...events, ...contactEvents].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
@@ -193,13 +190,13 @@ const Sidebar = () => {
       <div>
         <h3 className="text-xl font-bold mb-3 text-indigo-700">Upcoming Events</h3>
         <ul className="space-y-2 text-indigo-900">
-          {combinedEvents.length === 0 && (
+          {allEvents.length === 0 && (
             <li className="bg-white/60 rounded-lg px-3 py-2 text-gray-500">No events found.</li>
           )}
-          {combinedEvents.map((event) => (
-            <li key={`${event.id}-${event.title}`} className="bg-white/60 rounded-lg px-3 py-2">
+          {allEvents.map((event) => (
+            <li key={`${event.title}-${event.date}`} className="bg-white/60 rounded-lg px-3 py-2">
               🎉 {event.title} - {new Date(event.date).toLocaleDateString()}
-              {events.find((e) => e.id === event.id) && (
+              {event.id && (
                 <div className="flex justify-end gap-2 mt-1">
                   <button
                     onClick={() =>
