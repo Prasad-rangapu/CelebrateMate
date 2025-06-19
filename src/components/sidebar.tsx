@@ -10,10 +10,11 @@ interface Event {
 
 const Sidebar = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [contactEvents, setContactEvents] = useState<Event[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<"Birthday" | "Anniversary" | null>(null);
   const [form, setForm] = useState({ title: "", date: "", description: "" });
-  const [editEvent, setEditEvent] = useState<Event | null>(null); // for editing
+  const [editEvent, setEditEvent] = useState<Event | null>(null);
   const { user } = useAuth();
 
   const fetchEvents = () => {
@@ -26,15 +27,26 @@ const Sidebar = () => {
       .catch(() => setEvents([]));
   };
 
+  const fetchContactEvents = () => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    fetch(`http://localhost:5000/api/contacts/events/${userId}`)
+      .then((res) => res.json())
+      .then(setContactEvents)
+      .catch(() => setContactEvents([]));
+  };
+
   useEffect(() => {
-    fetchEvents();
+    if (user) {
+      fetchEvents();
+      fetchContactEvents();
+    }
   }, [user]);
 
   const openForm = (type: "Birthday" | "Anniversary", event?: Event) => {
     setFormType(type);
-
     if (event) {
-      // edit mode
       setEditEvent(event);
       setForm({
         title: event.title.replace(/^Birthday: |^Anniversary: /, ""),
@@ -42,11 +54,9 @@ const Sidebar = () => {
         description: event.description,
       });
     } else {
-      // add mode
       setEditEvent(null);
       setForm({ title: "", date: "", description: "" });
     }
-
     setShowForm(true);
   };
 
@@ -72,7 +82,6 @@ const Sidebar = () => {
     const url = editEvent
       ? `http://localhost:5000/api/events/${editEvent.id}`
       : "http://localhost:5000/api/events";
-
     const method = editEvent ? "PUT" : "POST";
 
     await fetch(url, {
@@ -96,6 +105,11 @@ const Sidebar = () => {
 
     fetchEvents();
   };
+
+  // ✅ Combine and sort all events by date
+  const combinedEvents = [...events, ...contactEvents].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 
   return (
     <aside className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 w-full md:w-80 mt-8 border border-white/30">
@@ -179,31 +193,33 @@ const Sidebar = () => {
       <div>
         <h3 className="text-xl font-bold mb-3 text-indigo-700">Upcoming Events</h3>
         <ul className="space-y-2 text-indigo-900">
-          {events.length === 0 && (
+          {combinedEvents.length === 0 && (
             <li className="bg-white/60 rounded-lg px-3 py-2 text-gray-500">No events found.</li>
           )}
-          {events.map((event) => (
-            <li key={event.id} className="bg-white/60 rounded-lg px-3 py-2">
+          {combinedEvents.map((event) => (
+            <li key={`${event.id}-${event.title}`} className="bg-white/60 rounded-lg px-3 py-2">
               🎉 {event.title} - {new Date(event.date).toLocaleDateString()}
-              <div className="flex justify-end gap-2 mt-1">
-                <button
-                  onClick={() =>
-                    openForm(
-                      event.title.startsWith("Birthday") ? "Birthday" : "Anniversary",
-                      event
-                    )
-                  }
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(event.id!)}
-                  className="text-red-600 hover:underline text-sm"
-                >
-                  Delete
-                </button>
-              </div>
+              {events.find((e) => e.id === event.id) && (
+                <div className="flex justify-end gap-2 mt-1">
+                  <button
+                    onClick={() =>
+                      openForm(
+                        event.title.startsWith("Birthday") ? "Birthday" : "Anniversary",
+                        event
+                      )
+                    }
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(event.id!)}
+                    className="text-red-600 hover:underline text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>

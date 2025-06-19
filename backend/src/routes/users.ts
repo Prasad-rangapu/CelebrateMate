@@ -6,4 +6,6 @@ const router = express.Router();
 router.post("/signup", usersController.signup);
 router.post("/login", usersController.login);
 router.put("/:id",usersController.editUserById)
+router.get("/:id", usersController.getUserById);
+router.put("/:id/reminder", usersController.reminder);
 export default router;

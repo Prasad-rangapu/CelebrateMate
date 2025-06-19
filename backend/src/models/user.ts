@@ -10,6 +10,8 @@ export interface User {
   is_verified: boolean;
   created_at: string;
   updated_at: string;
+  reminder?: string;
+  notification_type?: string;
 }
 
 export const findUserByEmail = async (email: string): Promise<User | null> => {
@@ -39,5 +41,18 @@ export const editUser = async (user: Pick<User, "id" | "name" | "email" | "phone
     [user.name, user.email, user.phone, user.birthday, user.id]
   );
   const [rows] = await pool.execute("SELECT * FROM users WHERE id = ?", [user.id]);
+  return (rows as User[])[0];
+};
+export const findUserById = async (id: number): Promise<User | null> => {
+  const [rows] = await pool.execute("SELECT * FROM users WHERE id = ?", [id]);
+  const user = (rows as User[])[0];
+  return user || null;
+};
+export const editUserReminder = async (id: number, reminder: string, notification_type: string): Promise<User> => {
+  await pool.execute(
+    "UPDATE users SET reminder = ?, notification_type = ? WHERE id = ?",
+    [reminder, notification_type, id]
+  );
+  const [rows] = await pool.execute("SELECT * FROM users WHERE id = ?", [id]);
   return (rows as User[])[0];
 };

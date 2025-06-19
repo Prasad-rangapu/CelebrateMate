@@ -1,10 +1,10 @@
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaBirthdayCake, FaGift } from "react-icons/fa";
 import Header from "../components/header";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import Footer from "../components/footer";
-import {useAuth} from "../auth/AuthContext"
+import { useAuth } from "../auth/AuthContext";
 
 interface Event {
   id?: number;
@@ -16,69 +16,112 @@ interface Event {
 interface Contact {
   id?: number;
   name: string;
-  email?: string;
-  phone?: string;
+  email: string;
+  phone: string;
+  birthday?: string;
+  anniversary?: string;
 }
 
 export default function DashBoard() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [contactEvents, setContactEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactForm, setContactForm] = useState<Contact>({
     name: "",
     email: "",
     phone: "",
+    birthday: "",
+    anniversary: "",
   });
   const [contactSuccess, setContactSuccess] = useState<string | null>(null);
-const {user}=useAuth();
-  // Fetch events for userId=1 (mock login)
+  const { user } = useAuth();
+
+  const [reminderDays, setReminderDays] = useState("1 day");
+  const [notificationType, setNotificationType] = useState("Email");
+
   useEffect(() => {
-   
     const userId = user?.id;
     if (!userId) return;
+
     setLoading(true);
     fetch(`http://localhost:5000/api/events?id=${userId}`)
       .then((res) => res.json())
-      .then((data) => {
-        setEvents(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      .then(setEvents)
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // Stats
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    fetch(`http://localhost:5000/api/contacts/events/${userId}`)
+      .then((res) => res.json())
+      .then(setContactEvents)
+      .catch(() => setContactEvents([]));
+  }, [user?.id]);
+
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+    fetch(`http://localhost:5000/api/users/${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const user = data.user;
+        setReminderDays(user.reminder);
+        setNotificationType(user.notification_type);
+      });
+  }, [user?.id]);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const userId = user?.id;
+    if (!userId) return;
+
+    await fetch(`http://localhost:5000/api/users/${userId}/reminder`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reminder: reminderDays,
+        notification_type: notificationType,
+      }),
+    });
+  };
+
+  const allEvents = [...events, ...contactEvents].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
   const today = new Date();
-  const birthdays = events.filter((e) =>
+  const birthdays = allEvents.filter((e) =>
     e.title.toLowerCase().startsWith("birthday")
   ).length;
-  const anniversaries = events.filter((e) =>
+  const anniversaries = allEvents.filter((e) =>
     e.title.toLowerCase().startsWith("anniversary")
   ).length;
-  const upcoming = events.filter((e) => new Date(e.date) >= today).length;
-  const missed = events.filter((e) => new Date(e.date) < today).length;
+  const upcoming = allEvents.filter((e) => new Date(e.date) >= today).length;
+  const missed = allEvents.filter((e) => new Date(e.date) < today).length;
 
-  // Next 5 upcoming
-  const upcomingEvents = events
+  const upcomingEvents = allEvents
     .filter((e) => new Date(e.date) >= today)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
 
-  // Contact form handlers
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setContactForm({ ...contactForm, [e.target.name]: e.target.value });
   };
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setContactSuccess(null);
-    const res = await fetch("http://localhost:5000/api/contacts", {
+    const res = await fetch(`http://localhost:5000/api/contacts?user_id=${user?.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(contactForm),
     });
     if (res.ok) {
       setContactSuccess("Contact added!");
-      setContactForm({ name: "", email: "", phone: "" });
+      setContactForm({ name: "", email: "", phone: "", birthday: "", anniversary: "" });
       setTimeout(() => setShowContactForm(false), 1000);
     } else {
       setContactSuccess("Failed to add contact.");
@@ -90,15 +133,12 @@ const {user}=useAuth();
       <Header />
       <Navbar />
       <main className="flex flex-1 max-w-6xl mx-auto w-full gap-8 mt-8 px-4">
-        {/* Sidebar */}
         <div className="hidden md:block w-80 flex-shrink-0">
           <Sidebar />
         </div>
 
-        {/* Main Dashboard */}
         <section className="flex-1 bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/40">
           <div className="flex flex-col gap-8">
-            {/* Header + Add Contact */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
               <h2 className="text-2xl font-bold text-indigo-900 drop-shadow-lg">
                 Welcome back, John!
@@ -111,7 +151,6 @@ const {user}=useAuth();
               </button>
             </div>
 
-            {/* Contact Modal */}
             {showContactForm && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <form
@@ -146,6 +185,22 @@ const {user}=useAuth();
                     onChange={handleContactChange}
                     className="w-full border rounded px-3 py-2"
                   />
+                  <label htmlFor="birthday">Birthday</label>
+                  <input
+                    name="birthday"
+                    type="date"
+                    value={contactForm.birthday}
+                    onChange={handleContactChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                  <label htmlFor="anniversary">Anniversary</label>
+                  <input
+                    name="anniversary"
+                    type="date"
+                    value={contactForm.anniversary}
+                    onChange={handleContactChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
                   {contactSuccess && (
                     <div className="text-green-600 text-sm">
                       {contactSuccess}
@@ -170,62 +225,48 @@ const {user}=useAuth();
               </div>
             )}
 
-            {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-              {/* Birthdays */}
               <div className="flex items-center gap-5 bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200/80 rounded-xl p-6 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border border-white/30 backdrop-blur">
                 <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl bg-gradient-to-br from-[#6a11cb] to-[#2575fc] text-white shadow-lg">
                   <FaBirthdayCake />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-indigo-800">
-                    {birthdays}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-indigo-800">{birthdays}</h3>
                   <p className="text-gray-600 text-sm">Birthdays Tracked</p>
                 </div>
               </div>
 
-              {/* Anniversaries */}
               <div className="flex items-center gap-5 bg-gradient-to-br from-pink-200 via-orange-100 to-yellow-100/80 rounded-xl p-6 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border border-white/30 backdrop-blur">
                 <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl bg-gradient-to-br from-[#ff6b6b] to-[#ff8e53] text-white shadow-lg">
                   <FaGift />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-pink-700">
-                    {anniversaries}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-pink-700">{anniversaries}</h3>
                   <p className="text-gray-600 text-sm">Anniversaries Tracked</p>
                 </div>
               </div>
 
-              {/* Upcoming */}
               <div className="flex items-center gap-5 bg-gradient-to-br from-green-200 via-blue-100 to-purple-100/80 rounded-xl p-6 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border border-white/30 backdrop-blur">
                 <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl bg-gradient-to-br from-green-400 to-blue-400 text-white shadow-lg">
                   <FaGift />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-green-700">
-                    {upcoming}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-green-700">{upcoming}</h3>
                   <p className="text-gray-600 text-sm">Upcoming Events</p>
                 </div>
               </div>
 
-              {/* Missed */}
               <div className="flex items-center gap-5 bg-gradient-to-br from-yellow-200 via-pink-100 to-indigo-100/80 rounded-xl p-6 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 border border-white/30 backdrop-blur">
                 <div className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl bg-gradient-to-br from-yellow-400 to-pink-400 text-white shadow-lg">
                   <FaGift />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-yellow-700">
-                    {missed}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-yellow-700">{missed}</h3>
                   <p className="text-gray-600 text-sm">Missed Events</p>
                 </div>
               </div>
             </div>
 
-            {/* Upcoming Events List */}
             <div className="bg-gradient-to-r from-indigo-100/80 via-pink-100/80 to-purple-100/80 rounded-xl p-6 shadow-lg border border-white/30 backdrop-blur">
               <h3 className="text-lg font-bold mb-4 text-indigo-800">
                 Upcoming Events
@@ -256,19 +297,21 @@ const {user}=useAuth();
               </ul>
             </div>
 
-            {/* Reminder Settings & Celebration Ideas */}
             <div id="reminder-settings" className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              {/* Reminder Settings */}
               <div className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
                 <h3 className="text-lg font-bold mb-4 text-indigo-800">
                   Reminder Settings
                 </h3>
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSaveSettings}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Remind me before
                     </label>
-                    <select className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white/80">
+                    <select
+                      value={reminderDays}
+                      onChange={(e) => setReminderDays(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white/80"
+                    >
                       <option>1 day</option>
                       <option>3 days</option>
                       <option>1 week</option>
@@ -278,7 +321,11 @@ const {user}=useAuth();
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notification Type
                     </label>
-                    <select className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white/80">
+                    <select
+                      value={notificationType}
+                      onChange={(e) => setNotificationType(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white/80"
+                    >
                       <option>Email</option>
                       <option>SMS</option>
                       <option>Push Notification</option>
@@ -293,7 +340,6 @@ const {user}=useAuth();
                 </form>
               </div>
 
-              {/* Celebration Ideas */}
               <div id="celebration-ideas" className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
                 <h3 className="text-lg font-bold mb-4 text-indigo-800">
                   Celebration Ideas

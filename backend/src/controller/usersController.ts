@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { createUser, findUserByEmail,editUser } from "../models/user";
+import { createUser, findUserByEmail,editUser ,findUserById,editUserReminder} from "../models/user";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
@@ -79,5 +79,45 @@ export const editUserById = async (req: Request, res: Response): Promise<void> =
   } catch (err) {
     console.error("Error updating profile:", err);
     res.status(500).json({ message: "Error updating profile" });
+  }
+};
+export const getUserById = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.params.id;
+
+  if (!userId) {
+    res.status(400).json({ message: "User ID is required" });
+    return;
+  }
+
+  try {
+    const user = await findUserById(Number(userId));
+  
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+user.password_hash =""; // Exclude password hash from response
+    user.is_verified = false; // Exclude verification status from response
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    res.status(500).json({ message: "Error fetching user" });
+  }
+};
+export const reminder = async (req: Request, res: Response): Promise<void> => {
+  const { reminder, notification_type } = req.body;
+  const userId = req.params.id;
+
+  if (!userId || !reminder || !notification_type) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const updatedUser = await editUserReminder(Number(userId), reminder, notification_type);
+    res.status(200).json({ message: "Reminder updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error("Error updating reminder:", err);
+    res.status(500).json({ message: "Error updating reminder" });
   }
 };
