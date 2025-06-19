@@ -195,7 +195,7 @@ const Sidebar = () => {
           )}
           {allEvents.map((event) => (
             <li key={`${event.title}-${event.date}`} className="bg-white/60 rounded-lg px-3 py-2">
-              🎉 {event.title} - {new Date(event.date).toLocaleDateString()}
+              🎉 {event.title} - {event.date.split("T")[0]}
               {event.id && (
                 <div className="flex justify-end gap-2 mt-1">
                   <button

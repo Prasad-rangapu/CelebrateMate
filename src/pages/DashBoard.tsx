@@ -221,10 +221,7 @@ export default function DashBoard() {
                       {event.title.replace(/^Birthday: |^Anniversary: /, "")}
                     </span>
                     <span className="ml-auto text-gray-600 text-sm">
-                      {new Date(event.date).toLocaleDateString(undefined, {
-                        day: "numeric",
-                        month: "short",
-                      })}
+                      {event.date.split("T")[0]}
                     </span>
                   </li>
                 ))}
@@ -248,7 +245,7 @@ export default function DashBoard() {
                     <select value={notificationType} onChange={(e) => setNotificationType(e.target.value)} className="w-full border rounded px-3 py-2 bg-white/80">
                       <option>Email</option>
                       <option>SMS</option>
-                      <option>Push Notification</option>
+                      <option>Both</option>
                     </select>
                   </div>
                   <button type="submit" className="bg-gradient-to-r from-indigo-400 to-pink-400 text-white px-4 py-2 rounded-lg font-semibold hover:scale-105 hover:shadow-xl transition-all duration-300">
