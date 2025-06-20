@@ -55,15 +55,19 @@
 ```bash
 git clone https://github.com/Prasad-rangapu/CelebrateMate.git
 cd CelebrateMate
+```
 
-###2️⃣ Install Dependencies
+### 2️⃣ Install Dependencies
+
 ```bash
 npm install
+```
 
-###3️⃣ Configure Environment Variables
+### 3️⃣ Configure Environment Variables
 
-Create a .env file in the root directory of your project and add the following:
-```bash
+Create a `.env` file in the root directory and add the following:
+
+```env
 PORT=5000
 DB_HOST=localhost
 DB_USER=root
@@ -72,22 +76,51 @@ DB_NAME=celebratemate
 JWT_SECRET=your_jwt_secret
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_email_password
+```
 
+> If you're using Gmail, enable 2-Step Verification and create an App Password for `EMAIL_PASS`.
 
-###4️⃣ Start the Server
-
-Run:
-
+### 4️⃣ Start the Server
 
 ```bash
 npm run dev
-This will start your backend server at
-```bash
-http://localhost:5000.
+```
 
-###5️⃣ Setup Reminder Cron Job (Optional)
+Server will run at:
 
-To send email reminders daily at 8:30 PM, add this cron job in your main server file (server.ts
+```
+http://localhost:5000
+```
 
+### 5️⃣ Setup Reminder Cron Job (Optional)
 
-Open terminal in the project folder and run:
+To send email reminders daily at **8:30 PM**, add this in your main server file (`server.ts` or `index.ts`):
+
+```ts
+import cron from "node-cron";
+import { sendReminderEmails } from "./controllers/reminder.controller";
+
+cron.schedule("30 20 * * *", () => {
+  console.log("⏰ Running daily reminder email job...");
+  sendReminderEmails();
+});
+```
+
+---
+
+## 📬 Contact
+
+Made with 💙 by **Prasad Rangapu**
+
+- GitHub: [@Prasad-rangapu](https://github.com/Prasad-rangapu)
+- Email: [rangapuprasad1234@gmail.com](mailto:rangapuprasad1234@gmail.com)
+- LinkedIn: [Prasad Rangapu](https://linkedin.com/in/prasad-rangapu)
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
+> Happy Celebrating with **CelebrateMate**! 🎊
+> 
