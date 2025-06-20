@@ -55,12 +55,15 @@
 ```bash
 git clone https://github.com/Prasad-rangapu/CelebrateMate.git
 cd CelebrateMate
-2️⃣ Install Dependencies
+
+###2️⃣ Install Dependencies
+```bash
 npm install
-3️⃣ Configure Environment Variables
+
+###3️⃣ Configure Environment Variables
 
 Create a .env file in the root directory of your project and add the following:
-
+```bash
 PORT=5000
 DB_HOST=localhost
 DB_USER=root
@@ -71,16 +74,18 @@ EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_email_password
 
 
-4️⃣ Start the Server
+###4️⃣ Start the Server
 
 Run:
 
-sql
-Copy code
-npm start
-This will start your backend server at http://localhost:5000.
 
-5️⃣ Setup Reminder Cron Job (Optional)
+```bash
+npm run dev
+This will start your backend server at
+```bash
+http://localhost:5000.
+
+###5️⃣ Setup Reminder Cron Job (Optional)
 
 To send email reminders daily at 8:30 PM, add this cron job in your main server file (server.ts
 
