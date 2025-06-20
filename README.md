@@ -1,58 +1,88 @@
-<<<<<<< HEAD
-# React + TypeScript + Vite
+# 🎉 CelebrateMate
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**CelebrateMate** is a full-stack web application that automatically reminds users of birthdays and anniversaries via SMS and email. It allows users to manage personal events and contact-related events, with powerful reminder settings and a clean, modern UI.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌟 Features
 
-## Expanding the ESLint configuration
+- 👤 User Authentication (Sign Up / Login)
+- 📅 Create and Manage Events (Birthdays, Anniversaries, Custom Events)
+- 📇 Contact Management with Event-based Reminders
+- 🔔 Custom Reminder Settings (e.g., 1 day, 2 days before)
+- 📬 Automatic Email & SMS Notifications
+- 📊 Dashboard with Event Statistics & Upcoming Events
+- 💻 Responsive UI with Tailwind CSS
+- 🧠 Smart Event Merging Logic (User + Contact events)
+- 🔐 Secure API with JWT
+- 🗓️ Daily Cron Jobs for Sending Reminders
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## 🛠️ Tech Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+| Technology       | Purpose                       |
+| ---------------- | ----------------------------- |
+| **Frontend**     | HTML, CSS, JavaScript, Tailwind CSS |
+| **Backend**      | Node.js, Express.js           |
+| **Database**     | MySQL / MariaDB               |
+| **Email Service**| Nodemailer                    |
+| **SMS Service**  | (e.g., Twilio / Custom API)   |
+| **Scheduler**    | node-cron                     |
+| **Date Utility** | dayjs                         |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
-=======
-# CelebrateMate
->>>>>>> ce8f35538696c0e24685c95ec6249c704fe88cde
+## 📸 Screenshots
+
+> Replace these placeholder links with real screenshots
+
+- **Dashboard:**  
+  ![Dashboard](https://via.placeholder.com/800x400?text=Dashboard+Screenshot)
+
+- **Event Form:**  
+  ![Event Form](https://via.placeholder.com/800x400?text=Event+Form+Screenshot)
+
+- **Reminder Settings:**  
+  ![Reminder](https://via.placeholder.com/800x400?text=Reminder+Settings+Screenshot)
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/Prasad-rangapu/CelebrateMate.git
+cd CelebrateMate
+2️⃣ Install Dependencies
+npm install
+3️⃣ Configure Environment Variables
+
+Create a .env file in the root directory of your project and add the following:
+
+PORT=5000
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=yourpassword
+DB_NAME=celebratemate
+JWT_SECRET=your_jwt_secret
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_password
+
+
+4️⃣ Start the Server
+
+Run:
+
+sql
+Copy code
+npm start
+This will start your backend server at http://localhost:5000.
+
+5️⃣ Setup Reminder Cron Job (Optional)
+
+To send email reminders daily at 8:30 PM, add this cron job in your main server file (server.ts
+
+
+Open terminal in the project folder and run:
