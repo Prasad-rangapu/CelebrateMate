@@ -24,8 +24,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/contacts', contactRoutes);
 
-// ⏰ Cron job to send reminders daily at 10:42 AM IST
-cron.schedule("42 10 * * *", async () => {
+// ⏰ Cron job to send reminders daily at 6:45 PM IST
+cron.schedule("45 18 * * *", async () => {
   console.log("⏰ Running daily reminder job (email + SMS)...");
   await sendReminders();
 }, {

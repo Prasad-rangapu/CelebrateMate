@@ -88,20 +88,53 @@ export default function DashBoard() {
       body: JSON.stringify({ reminder: reminderDays, notification_type: notificationType }),
     });
   };
+    const today = dayjs().startOf("day");
 
-  const allEvents = [...events, ...contactEvents].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+const getNextOccurrence = (dateStr: string) => {
+  const original = dayjs(dateStr);
+  const currentYear = today.year();
+  let next = original.year(currentYear);
 
-  const today = dayjs().startOf("day");
-  const birthdays = allEvents.filter((e) => e.title.toLowerCase().startsWith("birthday")).length;
-  const anniversaries = allEvents.filter((e) => e.title.toLowerCase().startsWith("anniversary")).length;
-  const upcoming = allEvents.filter((e) => dayjs(e.date).isSameOrAfter(today, "day")).length;
-  const missed = allEvents.filter((e) => dayjs(e.date).isBefore(today, "day")).length;
+  if (next.isBefore(today, "day")) {
+    next = next.add(1, "year");
+  }
 
-  const upcomingEvents = allEvents
-    .filter((e) => dayjs(e.date).isSameOrAfter(today, "day"))
-    .slice(0, 5);
+  return next;
+};
+
+const allEvents = [...events, ...contactEvents].sort((a, b) => {
+  const aNext = getNextOccurrence(a.date);
+  const bNext = getNextOccurrence(b.date);
+  return aNext.diff(bNext);
+});
+
+const birthdays = allEvents.filter((e) => e.title.toLowerCase().startsWith("birthday")).length;
+const anniversaries = allEvents.filter((e) => e.title.toLowerCase().startsWith("anniversary")).length;
+
+const upcoming = allEvents.filter((e) =>
+  getNextOccurrence(e.date).isSameOrAfter(today, "day")
+).length;
+
+const missedEvents = allEvents.filter((e) => {
+  const yesterday = dayjs().subtract(1, "day").format("MM-DD");
+const dayBeforeYesterday = dayjs().subtract(2, "day").format("MM-DD");
+  const eventMMDD = dayjs(e.date).format("MM-DD");
+  return eventMMDD === yesterday || eventMMDD === dayBeforeYesterday;
+});
+
+const yesterday = dayjs().subtract(1, "day").format("MM-DD");
+const dayBeforeYesterday = dayjs().subtract(2, "day").format("MM-DD");
+
+const missed = allEvents.filter((e) => {
+  const eventMMDD = dayjs(e.date).format("MM-DD");
+  return eventMMDD === yesterday || eventMMDD === dayBeforeYesterday;
+}).length;
+
+const upcomingEvents = allEvents
+  .filter((e) => getNextOccurrence(e.date).isSameOrAfter(today, "day"))
+  .slice(0, 5);
+
+
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setContactForm({ ...contactForm, [e.target.name]: e.target.value });
@@ -230,25 +263,45 @@ export default function DashBoard() {
                 ))}
               </ul>
             </div>
-
-            <div id="reminder-settings" className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div className="bg-gradient-to-r from-purple-100/80 via-pink-100/80 to-indigo-100/80 rounded-xl p-6 shadow-lg border border-white/30 backdrop-blur">
+              <h3 className="text-lg font-bold mb-4 text-indigo-800">Missed Events</h3>
+              <ul className="space-y-2">
+                {missedEvents.length === 0 && (
+                  <li className="text-gray-500">No missed events.</li>
+                )}
+                {missedEvents.map((event, idx) => (
+                  <li key={idx} className="flex items-center gap-3">
+                    <span className="text-xl">{event.title.startsWith("Birthday") ? "🎂" : "💍"}</span>
+                    <span className="font-semibold text-red-700">
+                      {event.title.replace(/^Birthday: |^Anniversary: /, "")}
+                    </span>
+                    <span className="ml-auto text-gray-600 text-sm">
+                      {dayjs(event.date).format("DD MMM YYYY")}
+                    </span>
+                  </li>
+                ))}
+              </ul></div>
+              
+            
+  
+              <div id="reminder-settings" className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               <div className="bg-white/70 backdrop-blur rounded-xl p-6 shadow-lg border border-white/30">
                 <h3 className="text-lg font-bold mb-4 text-indigo-800">Reminder Settings</h3>
                 <form className="space-y-4" onSubmit={handleSaveSettings}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Remind me before</label>
                     <select value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} className="w-full border rounded px-3 py-2 bg-white/80">
-                      <option>1 day</option>
-                      <option>3 days</option>
-                      <option>1 week</option>
+                      <option value="1 day">1 day</option>
+                      <option value="3 days">3 days</option>
+                      <option value="1 week">1 week</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Notification Type</label>
                     <select value={notificationType} onChange={(e) => setNotificationType(e.target.value)} className="w-full border rounded px-3 py-2 bg-white/80">
-                      <option>Email</option>
-                      <option>SMS</option>
-                      <option>Both</option>
+                      <option value="Email">Email</option>
+                      <option value="SMS">SMS</option>
+                      <option value="Both">Both</option>
                     </select>
                   </div>
                   <button type="submit" className="bg-gradient-to-r from-indigo-400 to-pink-400 text-white px-4 py-2 rounded-lg font-semibold hover:scale-105 hover:shadow-xl transition-all duration-300">

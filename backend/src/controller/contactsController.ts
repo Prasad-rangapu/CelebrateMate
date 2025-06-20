@@ -232,4 +232,5 @@ export const loadEvents = async (req: Request, res: Response): Promise<void> => 
 };
 
 
+
 export default { createContact, getContacts, editContact, deleteContact,loadEvents };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import dayjs from "dayjs";
+
 interface Event {
   id?: number;
   title: string;
@@ -34,7 +35,7 @@ const Sidebar = () => {
     fetch(`http://localhost:5000/api/contacts/events/${userId}`)
       .then((res) => res.json())
       .then((data: Event[]) => {
-        setContactEvents(data); // No transformation needed
+        setContactEvents(data);
       })
       .catch(() => setContactEvents([]));
   };
@@ -104,9 +105,23 @@ const Sidebar = () => {
     fetchEvents();
   };
 
-  const allEvents = [...events, ...contactEvents].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const today = dayjs();
+  const allEvents = [...events, ...contactEvents].sort((a, b) => {
+    const aDate = dayjs(a.date);
+    const bDate = dayjs(b.date);
+
+    const aMMDD = aDate.format("MM-DD");
+    const bMMDD = bDate.format("MM-DD");
+    const todayMMDD = today.format("MM-DD");
+
+    const aIsPast = aMMDD < todayMMDD;
+    const bIsPast = bMMDD < todayMMDD;
+
+    if (aIsPast && !bIsPast) return 1;
+    if (!aIsPast && bIsPast) return -1;
+
+    return aMMDD.localeCompare(bMMDD);
+  });
 
   return (
     <aside className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 w-full md:w-80 mt-8 border border-white/30">

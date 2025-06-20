@@ -24,8 +24,25 @@ const createEvent = async (event: Event) => {
 // Function to get all events for a user
 const getEventsByUserId = async (userId: number) => {
   const [rows] = await pool.execute(
-    "SELECT * FROM events WHERE userId = ? AND DATE(date) >= CURDATE() ORDER BY date ASC",
-    [userId]
+    `
+    (
+      SELECT * FROM events
+      WHERE userId = ? 
+        AND DATE_FORMAT(date, '%m-%d') >= DATE_FORMAT(CURDATE(), '%m-%d')
+      ORDER BY DATE_FORMAT(date, '%m-%d') ASC
+      LIMIT 3
+    )
+    UNION ALL
+    (
+      SELECT * FROM events
+      WHERE userId = ? 
+        AND DATE_FORMAT(date, '%m-%d') < DATE_FORMAT(CURDATE(), '%m-%d')
+      ORDER BY DATE_FORMAT(date, '%m-%d') ASC
+      LIMIT 3
+    )
+    LIMIT 3
+    `,
+    [userId, userId]
   );
   return rows;
 };
