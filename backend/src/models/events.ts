@@ -23,7 +23,10 @@ const createEvent = async (event: Event) => {
 
 // Function to get all events for a user
 const getEventsByUserId = async (userId: number) => {
-  const [rows] = await pool.execute("SELECT * FROM events WHERE userId = ? ORDER BY date ASC", [userId]);
+  const [rows] = await pool.execute(
+    "SELECT * FROM events WHERE userId = ? AND DATE(date) >= CURDATE() ORDER BY date ASC",
+    [userId]
+  );
   return rows;
 };
 

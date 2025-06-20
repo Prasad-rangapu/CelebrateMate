@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-
+import dayjs from "dayjs";
 interface Event {
   id?: number;
   title: string;
@@ -195,7 +195,7 @@ const Sidebar = () => {
           )}
           {allEvents.map((event) => (
             <li key={`${event.title}-${event.date}`} className="bg-white/60 rounded-lg px-3 py-2">
-              🎉 {event.title} - {event.date.split("T")[0]}
+              🎉 {event.title} - {dayjs(event.date).format("YYYY-MM-DD")}
               {event.id && (
                 <div className="flex justify-end gap-2 mt-1">
                   <button

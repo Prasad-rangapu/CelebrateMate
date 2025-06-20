@@ -21,7 +21,8 @@
     "mongoose": "^5.10.9",
     "mysql2": "^3.14.1",
     "node-cron": "^4.1.0",
-    "nodemailer": "^7.0.3"
+    "nodemailer": "^7.0.3",
+    "twilio": "^5.7.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

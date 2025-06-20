@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { pool } from "../db";
+import dayjs from "dayjs";
+
 
 // CREATE CONTACT
 const createContact = async (req: Request, res: Response):Promise<void> => {
@@ -93,9 +95,7 @@ const deleteContact = async (req: Request, res: Response):Promise<void> => {
     res.status(500).json({ message: "Error deleting contact", error: err });  
   }
 };
-// const loadEvents=async (req: Request, res: Response):Promise<void> => {
-//   try {
-//     const userId = req.query.id;
+
 //     if (!userId) {
 //       res.status(400).json({ message: "User ID is required in query" });
 //       return;
@@ -171,6 +171,8 @@ const deleteContact = async (req: Request, res: Response):Promise<void> => {
 //     res.status(500).json({ message: "Error fetching contact events", error: err });
 //   }
 // };
+
+
 export const loadEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id;
@@ -190,24 +192,37 @@ export const loadEvents = async (req: Request, res: Response): Promise<void> => 
       [userId]
     );
 
+    const today = dayjs();
     const contactEvents = [];
 
     for (const row of rows) {
+      // Birthday
       if (row.birthday) {
-        contactEvents.push({
-          title: `Birthday: ${row.name}`,
-          date: row.birthday,
-          description: `Birthday of ${row.name}`,
-        });
+        const birthdayThisYear = dayjs(row.birthday).year(today.year());
+        if (birthdayThisYear.isSame(today) || birthdayThisYear.isAfter(today)) {
+          contactEvents.push({
+            title: `Birthday: ${row.name}`,
+            date: birthdayThisYear.format("YYYY-MM-DD"),
+            description: `Birthday of ${row.name}`,
+          });
+        }
       }
+
+      // Anniversary
       if (row.anniversary) {
-        contactEvents.push({
-          title: `Anniversary: ${row.name}`,
-          date: row.anniversary,
-          description: `Anniversary of ${row.name}`,
-        });
+        const anniversaryThisYear = dayjs(row.anniversary).year(today.year());
+        if (anniversaryThisYear.isSame(today) || anniversaryThisYear.isAfter(today)) {
+          contactEvents.push({
+            title: `Anniversary: ${row.name}`,
+            date: anniversaryThisYear.format("YYYY-MM-DD"),
+            description: `Anniversary of ${row.name}`,
+          });
+        }
       }
     }
+
+    // Optional: sort by date ascending
+    contactEvents.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
 
     res.status(200).json(contactEvents);
   } catch (err) {
@@ -215,5 +230,6 @@ export const loadEvents = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ message: "Server error", error: err });
   }
 };
+
 
 export default { createContact, getContacts, editContact, deleteContact,loadEvents };

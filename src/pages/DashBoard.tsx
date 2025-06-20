@@ -5,6 +5,9 @@ import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import Footer from "../components/footer";
 import { useAuth } from "../auth/AuthContext";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+dayjs.extend(isSameOrAfter);
 
 interface Event {
   id?: number;
@@ -90,14 +93,14 @@ export default function DashBoard() {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  const today = new Date();
+  const today = dayjs().startOf("day");
   const birthdays = allEvents.filter((e) => e.title.toLowerCase().startsWith("birthday")).length;
   const anniversaries = allEvents.filter((e) => e.title.toLowerCase().startsWith("anniversary")).length;
-  const upcoming = allEvents.filter((e) => new Date(e.date) >= today).length;
-  const missed = allEvents.filter((e) => new Date(e.date) < today).length;
+  const upcoming = allEvents.filter((e) => dayjs(e.date).isSameOrAfter(today, "day")).length;
+  const missed = allEvents.filter((e) => dayjs(e.date).isBefore(today, "day")).length;
 
   const upcomingEvents = allEvents
-    .filter((e) => new Date(e.date) >= today)
+    .filter((e) => dayjs(e.date).isSameOrAfter(today, "day"))
     .slice(0, 5);
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,7 +224,7 @@ export default function DashBoard() {
                       {event.title.replace(/^Birthday: |^Anniversary: /, "")}
                     </span>
                     <span className="ml-auto text-gray-600 text-sm">
-                      {event.date.split("T")[0]}
+                      {dayjs(event.date).format("DD MMM YYYY")}
                     </span>
                   </li>
                 ))}

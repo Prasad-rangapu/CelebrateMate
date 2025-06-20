@@ -7,33 +7,33 @@ import cron from "node-cron";
 import eventRoutes from './routes/events';
 import userRoutes from "./routes/users";
 import contactRoutes from './routes/contacts';
-import { sendReminderEmails } from './controller/reminder'; // ✅ Import your reminder controller
+import { sendReminders } from './controller/reminder'; // ✅ Combined controller for email + SMS
 
 const app = express();
 
+// Middleware
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: ['http://localhost:5173'], // Update this for deployment
   credentials: true,
 }));
-
 app.use(express.json());
 app.use(bodyParser.json());
 
-// API Routes
+// Routes
 app.use('/api/events', eventRoutes);
-app.use("/api/users", userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/contacts', contactRoutes);
 
-// ✅ Cron job to send reminder emails every day at 20:36 IST
-cron.schedule("36 20 * * *", async () => {
-  console.log("⏰ Running daily reminder email job...");
-  await sendReminderEmails();
-},
-{ 
-  timezone: "Asia/Kolkata", // Adjust to your timezone
-  // runOnInit: true // Optional: run immediately on startup
+// ⏰ Cron job to send reminders daily at 10:42 AM IST
+cron.schedule("42 10 * * *", async () => {
+  console.log("⏰ Running daily reminder job (email + SMS)...");
+  await sendReminders();
+}, {
+  timezone: "Asia/Kolkata",
+  // runOnInit: true // 🔧 Uncomment for testing on server startup
 });
 
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
