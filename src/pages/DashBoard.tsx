@@ -7,7 +7,9 @@ import Footer from "../components/footer";
 import { useAuth } from "../auth/AuthContext";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 interface Event {
   id?: number;
@@ -111,9 +113,12 @@ const allEvents = [...events, ...contactEvents].sort((a, b) => {
 const birthdays = allEvents.filter((e) => e.title.toLowerCase().startsWith("birthday")).length;
 const anniversaries = allEvents.filter((e) => e.title.toLowerCase().startsWith("anniversary")).length;
 
-const upcoming = allEvents.filter((e) =>
-  getNextOccurrence(e.date).isSameOrAfter(today, "day")
-).length;
+const next7Days = today.add(7, "day");
+
+const upcoming = allEvents.filter((e) => {
+  const nextDate = getNextOccurrence(e.date);
+  return nextDate.isSameOrAfter(today, "day") && nextDate.isSameOrBefore(next7Days, "day");
+}).length;
 
 const missedEvents = allEvents.filter((e) => {
   const yesterday = dayjs().subtract(1, "day").format("MM-DD");
@@ -130,8 +135,12 @@ const missed = allEvents.filter((e) => {
   return eventMMDD === yesterday || eventMMDD === dayBeforeYesterday;
 }).length;
 
+
 const upcomingEvents = allEvents
-  .filter((e) => getNextOccurrence(e.date).isSameOrAfter(today, "day"))
+  .filter((e) => {
+    const nextDate = getNextOccurrence(e.date);
+    return nextDate.isSameOrAfter(today, "day") && nextDate.isSameOrBefore(next7Days, "day");
+  })
   .slice(0, 5);
 
 

@@ -2,6 +2,7 @@ import { useAuth } from "../auth/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import { useState } from "react";
+ import { toast } from "react-toastify";
 
 const Profile = () => {
   const { user, setUser } = useAuth();
@@ -51,12 +52,17 @@ const Profile = () => {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("user");
-    navigate("/login", { replace: true });
-  };
+ // If you're using it
+
+const handleLogout = () => {
+  setUser(null);
+  localStorage.removeItem("user");
+  sessionStorage.removeItem("user");
+toast.success("Logged out successfully!");
+navigate("/");
+window.location.reload();
+
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-200">

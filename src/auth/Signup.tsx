@@ -77,6 +77,15 @@ export default function Signup() {
         <button className="w-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white py-3 rounded-lg font-semibold hover:scale-105 transition duration-200">
           Sign Up
         </button>
+        <p className="text-center text-gray-600">
+          Already have an account?{" "}
+          <span
+            className="text-pink-600 cursor-pointer hover:underline"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </span>
+        </p>  
       </form>
     </div>
   );

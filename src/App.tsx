@@ -8,7 +8,7 @@ import Dashboard from "./pages/DashBoard";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import type { JSX } from "react";
-import Contacts from "./pages/contacts";
+import Contacts from "./pages/Contacts";
 
 // ✅ Protects routes that require login
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -19,13 +19,14 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 // ✅ All application routes
 function AppRoutes() {
   const { user } = useAuth();
+  console.log("Current user:", user);
 
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={!user ? <Home /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={!user && <Login /> } />
+      <Route path="/signup" element={!user && <Signup />} />
 
       {/* Protected Routes */}
       <Route

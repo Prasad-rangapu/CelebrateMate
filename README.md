@@ -35,7 +35,6 @@
 
 ## 📸 Screenshots
 
-> Replace these placeholder links with real screenshots
 
 - **Dashboard:**  
   ![Dashboard](https://via.placeholder.com/800x400?text=Dashboard+Screenshot)

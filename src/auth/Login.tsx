@@ -21,7 +21,7 @@ export default function Login() {
     if (res.ok) {
       const data = await res.json();
       setUser(data.user);
-      navigate("/main");
+      navigate("/dashboard");
     } else alert("Login failed");
   };
 
@@ -53,6 +53,16 @@ export default function Login() {
         <button className="w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:scale-105 transition">
           Login
         </button>
+
+        <p className="text-center text-gray-600">
+          Don't have an account?{" "}
+          <span
+            className="text-indigo-600 cursor-pointer hover:underline"
+            onClick={() => navigate("/signup")}
+          >
+            Sign Up
+          </span>
+        </p>  
       </form>
     </div>
   );

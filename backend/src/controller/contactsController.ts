@@ -96,83 +96,6 @@ const deleteContact = async (req: Request, res: Response):Promise<void> => {
   }
 };
 
-//     if (!userId) {
-//       res.status(400).json({ message: "User ID is required in query" });
-//       return;
-//     }
-
-//     const [rows] = await pool.execute(
-//       "SELECT * FROM contacts WHERE user_id = ? AND (birthday IS NOT NULL OR anniversary IS NOT NULL) ORDER BY birthday, anniversary",
-//       [userId]
-//     );
-
-//     res.status(200).json(rows);
-//   } catch (err) {
-//     res.status(500).json({ message: "Error fetching events", error: err }); 
-//   }
-// };
-// const loadEvents = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const userId = req.params.id;
-//     if (!userId) {
-//       res.status(400).json({ message: "User ID is required in URL params" });
-//       return;
-//     }
-
-//     const [rows] = await pool.execute(
-//       `SELECT 
-//          id, 
-//          CASE 
-//            WHEN birthday IS NOT NULL THEN CONCAT('Birthday: ', name)
-//            WHEN anniversary IS NOT NULL THEN CONCAT('Anniversary: ', name)
-//          END AS title,
-//          COALESCE(birthday, anniversary) AS date,
-//          '' AS description
-//        FROM contacts
-//        WHERE user_id = ? AND (birthday IS NOT NULL OR anniversary IS NOT NULL)
-//        ORDER BY date`,
-//       [userId]
-//     );
-
-//     res.status(200).json(rows);
-//   } catch (err) {
-//     console.error("Error fetching contact events:", err);
-//     res.status(500).json({ message: "Error fetching contact events", error: err });
-//   }
-// };
-// export const loadEvents = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const userId = req.params.id;
-//     if (!userId) {
-//       res.status(400).json({ message: "User ID is required in URL params" });
-//       return;
-//     }
-
-//     const [rows] = await pool.execute(
-//       `
-//       SELECT id, CONCAT('Birthday: ', name) AS title, birthday AS date, '' AS description
-//       FROM contacts
-//       WHERE user_id = ? AND birthday IS NOT NULL
-
-//       UNION ALL
-
-//       SELECT id, CONCAT('Anniversary: ', name) AS title, anniversary AS date, '' AS description
-//       FROM contacts
-//       WHERE user_id = ? AND anniversary IS NOT NULL
-
-//       ORDER BY date ASC
-//       `,
-//       [userId, userId]
-//     );
-
-//     res.status(200).json(rows);
-//   } catch (err) {
-//     console.error("Error fetching contact events:", err);
-//     res.status(500).json({ message: "Error fetching contact events", error: err });
-//   }
-// };
-
-
 export const loadEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id;
@@ -196,34 +119,26 @@ export const loadEvents = async (req: Request, res: Response): Promise<void> => 
     const contactEvents = [];
 
     for (const row of rows) {
-      // Birthday
       if (row.birthday) {
         const birthdayThisYear = dayjs(row.birthday).year(today.year());
-        if (birthdayThisYear.isSame(today) || birthdayThisYear.isAfter(today)) {
-          contactEvents.push({
-            title: `Birthday: ${row.name}`,
-            date: birthdayThisYear.format("YYYY-MM-DD"),
-            description: `Birthday of ${row.name}`,
-          });
-        }
+        contactEvents.push({
+          title: `Birthday: ${row.name}`,
+          date: birthdayThisYear.format("YYYY-MM-DD"),
+          description: `Birthday of ${row.name}`,
+        });
       }
 
-      // Anniversary
       if (row.anniversary) {
         const anniversaryThisYear = dayjs(row.anniversary).year(today.year());
-        if (anniversaryThisYear.isSame(today) || anniversaryThisYear.isAfter(today)) {
-          contactEvents.push({
-            title: `Anniversary: ${row.name}`,
-            date: anniversaryThisYear.format("YYYY-MM-DD"),
-            description: `Anniversary of ${row.name}`,
-          });
-        }
+        contactEvents.push({
+          title: `Anniversary: ${row.name}`,
+          date: anniversaryThisYear.format("YYYY-MM-DD"),
+          description: `Anniversary of ${row.name}`,
+        });
       }
     }
 
-    // Optional: sort by date ascending
     contactEvents.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-
     res.status(200).json(contactEvents);
   } catch (err) {
     console.error("Error loading contact events:", err);
