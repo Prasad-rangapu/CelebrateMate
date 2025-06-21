@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import Navbar from "../components/navbar";
 import Header from "../components/header";
+import dayjs from "dayjs";
 
 interface Contact {
   id: number;
@@ -50,7 +51,7 @@ const Contact = () => {
       await fetch(`http://localhost:5000/api/contacts?user_id=${user?.id}`, {
        method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, user_id: user?.id, birthday: formData.birthday?.split("T")[0] || null, anniversary: formData.anniversary?.split("T")[0] || null }),
+        body: JSON.stringify({ ...formData, user_id: user?.id, birthday: dayjs(formData?.birthday).format("YYYY-MM-DD") || null, anniversary:dayjs(formData.anniversary).format("YYYY-MM-DD") }),
       });
 
       setShowForm(false);
@@ -116,12 +117,12 @@ const Contact = () => {
                   📧 {contact.email || <span className="text-gray-400 italic">No email</span>}<br />
                   📞 {contact.phone || <span className="text-gray-400 italic">No phone</span>}<br />
                   🎂 {contact.birthday ? (
-                    <span className="text-pink-500">{contact.birthday.split("T")[0]}</span>
+                    <span className="text-pink-500">{dayjs(contact.birthday).format("YYYY-MM-DD")}</span>
                   ) : (
                     <span className="text-gray-400 italic">No birthday</span>
                   )}<br />
                   💍 {contact.anniversary ? (
-                    <span className="text-blue-500">{contact.anniversary.split("T")[0]}</span>
+                    <span className="text-blue-500">{dayjs(contact.anniversary).format("YYYY-MM-DD")}</span>
                   ) : (
                     <span className="text-gray-400 italic">No anniversary</span>
                   )}
@@ -180,13 +181,13 @@ const Contact = () => {
               <input
                 type="date"
                 className="w-full border border-gray-300 rounded-lg p-2"
-                value={formData.birthday || ""}
-                onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                value={dayjs(formData.birthday).format("YYYY-MM-DD") || ""}
+                onChange={(e) => setFormData({...formData,birthday: e.target.value})}
               />
               <input
                 type="date"
                 className="w-full border border-gray-300 rounded-lg p-2"
-                value={formData.anniversary || ""}
+                value={dayjs(formData.anniversary).format("YYYY-MM-DD") || ""}
                 onChange={(e) => setFormData({ ...formData, anniversary: e.target.value })}
               />
 

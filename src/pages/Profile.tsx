@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import { useState } from "react";
  import { toast } from "react-toastify";
+ import dayjs from "dayjs";
 
 const Profile = () => {
   const { user, setUser } = useAuth();
@@ -13,7 +14,7 @@ const Profile = () => {
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    birthday: user?.birthday || "",
+    birthday: dayjs(user?.birthday).format("YYYY-MM-DD") || "",
   });
 
   if (!user) return <Navigate to="/login" replace />;
@@ -108,7 +109,7 @@ window.location.reload();
                 <p><span className="font-semibold text-indigo-600">Name:</span> {user.name}</p>
                 <p><span className="font-semibold text-indigo-600">Email:</span> {user.email}</p>
                 <p><span className="font-semibold text-indigo-600">Phone:</span> {user.phone}</p>
-                <p><span className="font-semibold text-indigo-600">Birthday:</span> {user.birthday.split("T")[0]}</p>
+                <p><span className="font-semibold text-indigo-600">Birthday:</span> {dayjs(user.birthday).format("MMMM D, YYYY")}</p>
               </div>
               <div className="mt-6 text-center space-x-4">
                 <button

@@ -51,7 +51,7 @@ const Sidebar = () => {
       setEditEvent(event);
       setForm({
         title: event.title.replace(/^Birthday: |^Anniversary: /, ""),
-        date: event.date,
+        date: dayjs(event.date).format("YYYY-MM-DD"),
         description: event.description,
       });
     } else {
