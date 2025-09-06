@@ -36,17 +36,17 @@ export const sendReminders = async (req?: Request, res?: Response): Promise<void
         // ✉️ Email
         if (event.email && (event.notification_type === "Email" || event.notification_type === "Both")) {
           await sendEmail(
-            event.email,
+            event.user_email,
             `📅 Reminder: ${event.title} is in ${reminderDays} day(s)`,
             emailContent
           );
-          console.log(`✅ Email sent to ${event.email}`);
+          console.log(`✅ Email sent to ${event.user_email}`);
           successCount++;
         }
 
         // 📱 SMS
-        if (event.phone && (event.notification_type === "SMS" || event.notification_type === "Both")) {
-          const formattedPhone = formatPhone(event.phone);
+        if (event.user_phone && (event.notification_type === "SMS" || event.notification_type === "Both")) {
+          const formattedPhone = formatPhone(event.user_phone);
           if (formattedPhone) {
             await sendSMS(formattedPhone, messageText);
             console.log(`✅ SMS sent to ${formattedPhone}`);
@@ -78,7 +78,6 @@ export const sendReminders = async (req?: Request, res?: Response): Promise<void
   }
 };
 
-// For manual test endpoint if needed
 export const sendRemindersHandler = async (req: Request, res: Response): Promise<void> => {
   await sendReminders(req, res);
 };

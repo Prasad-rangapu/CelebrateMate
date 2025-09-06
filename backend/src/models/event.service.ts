@@ -6,6 +6,8 @@ interface ReminderEvent {
   description: string;
   email: string;
   phone: string;
+  user_email: string;
+  user_phone: string;
   reminder: number;
   notification_type: string;
 }
@@ -17,8 +19,10 @@ export const getUpcomingEventsWithReminders = async (): Promise<ReminderEvent[]>
         e.title, 
         e.date, 
         e.description, 
-        u.email, 
-        u.phone,
+        u.email AS email, 
+        u.phone AS phone,
+        u.email AS user_email,
+        u.phone AS user_phone,
         CAST(SUBSTRING_INDEX(u.reminder, ' ', 1) AS UNSIGNED) AS reminder,
         u.notification_type
       FROM events e
@@ -31,8 +35,10 @@ export const getUpcomingEventsWithReminders = async (): Promise<ReminderEvent[]>
         CONCAT(c.name, "'s Birthday") AS title,
         DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(CURDATE()), '-', DATE_FORMAT(c.birthday, '%m-%d')), '%Y-%m-%d'), '%Y-%m-%d') AS date,
         'Birthday reminder' AS description,
-        c.email,
-        u.phone,
+        c.email AS email,
+        u.phone AS phone,
+        u.email AS user_email,
+        u.phone AS user_phone,
         CAST(SUBSTRING_INDEX(u.reminder, ' ', 1) AS UNSIGNED) AS reminder,
         u.notification_type
       FROM contacts c
@@ -49,8 +55,10 @@ export const getUpcomingEventsWithReminders = async (): Promise<ReminderEvent[]>
         CONCAT(c.name, "'s Anniversary") AS title,
         DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(CURDATE()), '-', DATE_FORMAT(c.anniversary, '%m-%d')), '%Y-%m-%d') , '%Y-%m-%d') AS date,
         'Anniversary reminder' AS description,
-        c.email,
-        u.phone,
+        c.email AS email,
+        u.phone AS phone,
+        u.email AS user_email,
+        u.phone AS user_phone,
         CAST(SUBSTRING_INDEX(u.reminder, ' ', 1) AS UNSIGNED) AS reminder,
         u.notification_type
       FROM contacts c
