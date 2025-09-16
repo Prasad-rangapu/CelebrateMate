@@ -48,7 +48,7 @@ const Profile = () => {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      birthday: user.birthday,
+      birthday: dayjs(user.birthday).format("YYYY-MM-DD"),
     });
     setIsEditing(false);
   };
@@ -57,12 +57,9 @@ const Profile = () => {
 
 const handleLogout = () => {
   setUser(null);
-  localStorage.removeItem("user");
-  sessionStorage.removeItem("user");
-toast.success("Logged out successfully!");
-navigate("/");
-window.location.reload();
-
+  // The AuthContext's useEffect will handle removing from localStorage
+  toast.success("Logged out successfully!");
+  navigate("/");
 };
 
   return (

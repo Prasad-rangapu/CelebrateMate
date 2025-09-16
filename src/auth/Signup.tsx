@@ -46,7 +46,7 @@ export default function Signup() {
 
       const data = await res.json();
       setUser(data.user);
-      navigate("/main");
+      navigate("/dashboard");
     } catch (err) {
       alert("Signup failed. Please try again.");
       console.log(err);

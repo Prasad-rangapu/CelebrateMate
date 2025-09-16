@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import Navbar from "../components/navbar";
-import Header from "../components/header";
 import dayjs from "dayjs";
+import ContactForm from "../components/ContactForm";
+import type { Contact } from "../components/ContactForm";
 
-interface Contact {
+
+interface ContactData extends Contact {
   id: number;
   name: string;
   email: string;
@@ -13,23 +15,15 @@ interface Contact {
   anniversary: string | null;
 }
 
-const Contact = () => {
+const Contacts = () => {
   const { user } = useAuth();
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<ContactData[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Contact>({
-    id: 0,
-    name: "",
-    email: "",
-    phone: "",
-    birthday: "",
-    anniversary: "",
-  });
+  const [editingContact, setEditingContact] = useState<ContactData | null>(null);
 
   const fetchContacts = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/contacts?id=${user?.id}`);
+      const res = await fetch(`http://localhost:5000/api/contacts?user_id=${user?.id}`);
       const data = await res.json();
       setContacts(data);
     } catch (err) {
@@ -41,32 +35,11 @@ const Contact = () => {
     if (user?.id) fetchContacts();
   }, [user?.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-   
-    const method = isEditing ? "PUT" : "POST";
-
-    try {
-      await fetch(`http://localhost:5000/api/contacts?user_id=${user?.id}`, {
-       method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, user_id: user?.id, birthday: dayjs(formData?.birthday).format("YYYY-MM-DD") || null, anniversary:dayjs(formData.anniversary).format("YYYY-MM-DD") }),
-      });
-
-      setShowForm(false);
-      setFormData({ id: 0, name: "", email: "", phone: "", birthday: "", anniversary: "" });
-      fetchContacts();
-    } catch (err) {
-      console.error("Submit error:", err);
-    }
-  };
-
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this contact?")) return;
 
     try {
-      await fetch(`http://localhost:5000/api/contacts/${id}`, {
+      await fetch(`http://localhost:5000/api/contacts/${id}?user_id=${user?.id}`, {
         method: "DELETE",
       });
       fetchContacts();
@@ -75,22 +48,24 @@ const Contact = () => {
     }
   };
 
-  const handleEdit = (contact: Contact) => {
-    setFormData(contact);
-    setIsEditing(true);
+  const handleEdit = (contact: ContactData) => {
+    setEditingContact(contact);
     setShowForm(true);
   };
 
   const handleNew = () => {
-    setFormData({ id: 0, name: "", email: "", phone: "", birthday: "", anniversary: "" });
-    setIsEditing(false);
+    setEditingContact(null);
     setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingContact(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-blue-100 to-purple-100 text-gray-800">
       <Navbar />
-      <Header />
 
       <div className="max-w-6xl mx-auto px-6 py-10 relative">
         <div className="flex justify-between items-center mb-8">
@@ -148,70 +123,15 @@ const Contact = () => {
         )}
       </div>
 
-      {/* Modal Form - styled like Dashboard */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md px-8 py-6">
-            <h2 className="text-2xl font-bold text-purple-600 mb-4 text-center">
-              {isEditing ? "Edit Contact" : "New Contact"}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Name"
-                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-              <input
-                type="date"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={dayjs(formData.birthday).format("YYYY-MM-DD") || ""}
-                onChange={(e) => setFormData({...formData,birthday: e.target.value})}
-              />
-              <input
-                type="date"
-                className="w-full border border-gray-300 rounded-lg p-2"
-                value={dayjs(formData.anniversary).format("YYYY-MM-DD") || ""}
-                onChange={(e) => setFormData({ ...formData, anniversary: e.target.value })}
-              />
-
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  className="text-gray-500 hover:text-gray-800"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-                >
-                  {isEditing ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ContactForm
+        show={showForm}
+        onClose={handleCloseForm}
+        onSave={fetchContacts}
+        userId={user?.id}
+        initialData={editingContact}
+      />
     </div>
   );
 };
 
-export default Contact;
+export default Contacts;

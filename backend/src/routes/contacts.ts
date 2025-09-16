@@ -3,16 +3,16 @@ import ContactsController from "../controller/contactsController";
 
 const router = Router();
 
-// POST contact (user_id should be in req.body)
+// POST contact (user_id should be in query params)
 router.post("/", ContactsController.createContact);
 
-// GET contacts by user ID from query: /api/contacts?id
+// GET contacts by user ID from query: /api/contacts?user_id=
 router.get("/", ContactsController.getContacts);
 
-// PUT contact (user_id should be in req.body)
-router.put("/", ContactsController.editContact);
+// PUT contact (user_id should be in query params)
+router.put("/:id", ContactsController.editContact);
 
-// DELETE contact by ID from params: /api/contacts/:id
+// DELETE contact by ID from params: /api/contacts/:id?user_id=
 router.delete("/:id", ContactsController.deleteContact);
 
 // ✅ GET contact events (birthday/anniversary) by user ID: /api/contacts/events/:id

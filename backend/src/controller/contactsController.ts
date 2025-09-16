@@ -5,13 +5,20 @@ import dayjs from "dayjs";
 
 // CREATE CONTACT
 const createContact = async (req: Request, res: Response):Promise<void> => {
+  // Note: It's better to get user_id from a decoded JWT token in middleware for security
   try {
-    var { name, email, phone, birthday, anniversary } = req.body;
+    let { name, email, phone, birthday, anniversary } = req.body;
     const user_id = req.query.user_id;
-if(!birthday) {
-  birthday = null;}
-if(!anniversary) {
-  anniversary = null;}  
+
+    if (!user_id || !name) {
+      res.status(400).json({ message: "User ID and contact name are required." });
+      return;
+    }
+
+    // Ensure empty strings are stored as NULL
+    birthday = birthday || null;
+    anniversary = anniversary || null;
+
     const [result] = await pool.execute(
       "INSERT INTO contacts (name, email, phone, birthday, anniversary, user_id) VALUES (?, ?, ?, ?, ?, ?)",
       [name, email, phone, birthday, anniversary, user_id]
@@ -25,16 +32,17 @@ if(!anniversary) {
       birthday,
       anniversary,
       user_id,
-    });
+    }); 
   } catch (err) {
-    res.status(400).json({ message: "Error creating contact", error: err });
+    console.error("Error creating contact:", err);
+    res.status(500).json({ message: "Error creating contact", error: err });
   }
 };
 
 // GET ALL CONTACTS
 const getContacts = async (req: Request, res: Response):Promise<void>  => {
   try {
-    const userId = req.query.id;
+    const userId = req.query.user_id; // Changed from 'id' to 'user_id' for consistency
     if (!userId) {
       res.status(400).json({ message: "User ID is required in query" });
       return;
@@ -47,42 +55,70 @@ const getContacts = async (req: Request, res: Response):Promise<void>  => {
 
     res.status(200).json(rows);
   } catch (err) {
+    console.error("Error fetching contacts:", err);
     res.status(500).json({ message: "Error fetching contacts", error: err });
   }
 };
 const editContact = async (req: Request, res: Response):Promise<void> => {
   try {
-    const { id, name, email, phone, birthday, anniversary } = req.body;
+    const { id } = req.params; // Get ID from URL parameter
+    const { name, email, phone, birthday, anniversary } = req.body;
     const user_id = req.query.user_id;
 
     if (!id || !user_id) {
-      res.status(400).json({ message: "Contact ID and User ID are required" });
+      res.status(400).json({ message: "Contact ID and User ID are required." });
       return;
     }
 
-    await pool.execute(
-      "UPDATE contacts SET name = ?, email = ?, phone = ?, birthday = ?, anniversary = ? WHERE id = ? AND user_id = ?",
-      [name, email, phone, birthday, anniversary, id, user_id]
+    // Build the update query dynamically to only change provided fields
+    const fieldsToUpdate: { [key: string]: any } = {};
+    if (name !== undefined) fieldsToUpdate.name = name;
+    if (email !== undefined) fieldsToUpdate.email = email;
+    if (phone !== undefined) fieldsToUpdate.phone = phone;
+    if (birthday !== undefined) fieldsToUpdate.birthday = birthday || null;
+    if (anniversary !== undefined) fieldsToUpdate.anniversary = anniversary || null;
+
+    const fieldNames = Object.keys(fieldsToUpdate);
+    if (fieldNames.length === 0) {
+      res.status(400).json({ message: "No fields to update." });
+      return;
+    }
+
+    const setClause = fieldNames.map(field => `${field} = ?`).join(', ');
+    const [result] = await pool.execute(
+      `UPDATE contacts SET ${setClause} WHERE id = ? AND user_id = ?`,
+      [...Object.values(fieldsToUpdate), id, user_id]
     );
 
-    res.status(200).json({ message: "Contact updated successfully" });
+    if ((result as any).affectedRows === 0) {
+      res.status(404).json({ message: "Contact not found or you do not have permission to edit it." });
+      return;
+    }
+
+    // Fetch the complete, updated contact from the database to ensure a consistent response
+    const [updatedRows] = await pool.execute("SELECT * FROM contacts WHERE id = ?", [id]);
+    const updatedContact = (updatedRows as any)[0];
+
+    res.status(200).json(updatedContact);
   } catch (err) {
+    console.error("Error updating contact:", err);
     res.status(500).json({ message: "Error updating contact", error: err });
   }
 };
 const deleteContact = async (req: Request, res: Response):Promise<void> => {
   try { 
     const contactId = req.params.id;
-    
+    const userId = req.query.user_id; // Security: Ensure user can only delete their own contact
 
-    if (!contactId) {
+    if (!contactId || !userId) {
       res.status(400).json({ message: "Contact ID and User ID are required" });
       return;
     }
 
+    // Security: Added user_id to the WHERE clause
     const [result] = await pool.execute(
-      "DELETE FROM contacts WHERE id = ?",
-      [contactId]
+      "DELETE FROM contacts WHERE id = ? AND user_id = ?",
+      [contactId, userId]
     );
 
     if ((result as any).affectedRows === 0) {
